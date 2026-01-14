@@ -2,9 +2,9 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: nimbus_db_container
+    container_name: siibs_db_container
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: senha123 # Senha padrão para desenvolvimento

@@ -1,3 +1,4 @@
+const { application } = require('express')
 const AppError = require('../utils/AppError')
 const { PrismaClient } = require('@prisma/client')
 
@@ -43,8 +44,8 @@ class CourseService {
 
     async getCourse({ teacher_id } = {}) {
         if(teacher_id) {
-            if (!await prisma.users.findUnique({ where: { id: teacher_id }})) {
-                throw new Error('Teacher not found', 404)
+            if (!await prisma.users.findUnique({ where: { id: teacher_id, role: "TEACHER" }})) {
+                throw new AppError('Teacher not found', 404)
             }
         }
 

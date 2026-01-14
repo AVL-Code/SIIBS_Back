@@ -1,0 +1,272 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model attendance {
+  id                   String                @id(map: "attendance_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  enrollment_id        String?               @db.Uuid
+  class_date           DateTime              @db.Date
+  status               String                @db.Char(2)
+  medical_cert_id      String?               @db.Uuid
+  created_at           DateTime              @default(now()) @db.Timestamp(6)
+  enrollments          enrollments?          @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_certificates medical_certificates? @relation(fields: [medical_cert_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model attendance_log {
+  id          String    @id(map: "attendance_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model class_reports {
+  id              String   @id(map: "class_reports_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  teacher_id      String   @db.Uuid
+  class_id        String   @db.Uuid
+  reference_month DateTime @db.Date
+  content         String
+  created_at      DateTime @default(now()) @db.Timestamp(6)
+  classes         classes  @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users           users    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model class_reports_log {
+  id          String    @id(map: "class_reports_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model classes {
+  id            String          @id(map: "classes_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  course_id     String          @db.Uuid
+  class_name    String          @db.VarChar(100)
+  schedule      Json
+  class_slots   Int
+  class_reports class_reports[]
+  courses       courses         @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments   enrollments[]
+  waitlist      waitlist[]
+}
+
+model classes_log {
+  id          String    @id(map: "classes_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model courses {
+  id          String     @id(map: "courses_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String     @db.VarChar(255)
+  teacher_id  String     @db.Uuid
+  start_date  DateTime   @db.Date
+  end_date    DateTime   @db.Date
+  total_slots Int
+  for_adults  Boolean?   @default(false)
+  created_at  DateTime   @default(now()) @db.Timestamp(6)
+  classes     classes[]
+  users       users      @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  waitlist    waitlist[]
+}
+
+model courses_log {
+  id          String    @id(map: "courses_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model enrollments {
+  id                   String                 @id(map: "enrollments_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  student_id           String?                @db.Uuid
+  guardians_id         String?                @db.Uuid
+  class_id             String                 @db.Uuid
+  status               String                 @default("active") @db.VarChar(20)
+  enrollment_date      DateTime               @default(now()) @db.Timestamp(6)
+  dismissal_date       DateTime?              @db.Timestamp(6)
+  dismissal_reason     String?
+  guardian_signature   String?
+  attendance           attendance[]
+  classes              classes                @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  guardians            guardians?             @relation(fields: [guardians_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  students             students?              @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_certificates medical_certificates[]
+}
+
+model enrollments_log {
+  id          String    @id(map: "enrollments_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model guardians {
+  id               String             @id(map: "guardians_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id          String?            @db.Uuid
+  name             String             @db.VarChar(255)
+  birth_date       DateTime           @db.Date
+  national_id      String             @db.VarChar(20)
+  photo_doc        String?
+  phone            String             @db.VarChar(20)
+  address_proof    String
+  status           String?            @db.VarChar(50)
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  enrollments      enrollments[]
+  users            users?             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student_guardian student_guardian[]
+}
+
+model guardians_log {
+  id          String    @id(map: "guardians_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model medical_certificates {
+  id                  String       @id(map: "medical_certificates_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  enrollment_id       String?      @db.Uuid
+  file                String
+  uploaded_by_user_id String       @db.Uuid
+  upload_date         DateTime     @default(now()) @db.Timestamp(6)
+  attendance          attendance[]
+  enrollments         enrollments? @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users               users        @relation(fields: [uploaded_by_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model medical_certificates_log {
+  id          String    @id(map: "medical_certificates_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model student_guardian {
+  id          String    @id(map: "student_guardian_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  student_id  String    @db.Uuid
+  guardian_id String    @db.Uuid
+  is_primary  Boolean   @default(false)
+  guardians   guardians @relation(fields: [guardian_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  students    students  @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model student_guardian_log {
+  id          String    @id(map: "student_guardian_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model students {
+  id                String             @id(map: "students_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name              String             @db.VarChar(255)
+  birth_date        DateTime           @db.Date
+  document          String?
+  photo             String?
+  address_proof     String
+  school_enrollment String
+  is_adult          Boolean            @default(false)
+  status            String             @default("active") @db.VarChar(50)
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  enrollments       enrollments[]
+  student_guardian  student_guardian[]
+  waitlist          waitlist[]
+}
+
+model students_log {
+  id          String    @id(map: "students_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model users {
+  id                   String                 @id(map: "users_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String                 @db.VarChar(255)
+  email                String                 @unique(map: "users_email_unique") @db.VarChar(255)
+  password_hash        String                 @db.VarChar(255)
+  role                 user_role
+  is_active            Boolean                @default(true)
+  created_at           DateTime               @default(now()) @db.Timestamp(6)
+  class_reports        class_reports[]
+  courses              courses[]
+  guardians            guardians[]
+  medical_certificates medical_certificates[]
+  waitlist             waitlist[]
+}
+
+model users_log {
+  id          String    @id(map: "users_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+model waitlist {
+  id               String   @id(map: "waitlist_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  candidate_id     String   @db.Uuid
+  guardian_user_id String?  @db.Uuid
+  target_course_id String   @db.Uuid
+  target_class_id  String?  @db.Uuid
+  entry_date       DateTime @default(now()) @db.Timestamp(6)
+  status           String   @default("waiting") @db.VarChar(20)
+  students         students @relation(fields: [candidate_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users?   @relation(fields: [guardian_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  classes          classes? @relation(fields: [target_class_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  courses          courses  @relation(fields: [target_course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model waitlist_log {
+  id          String    @id(map: "waitlist_log_pk") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  original_id String?   @db.Uuid
+  action      String?   @db.VarChar(10)
+  old_data    Json?
+  new_data    Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  created_by  String?   @db.Uuid
+}
+
+enum user_role {
+  ADMIN
+  SUPERVISOR
+  TEACHER
+  GUARDIAN
+}

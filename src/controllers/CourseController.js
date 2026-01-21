@@ -3,7 +3,9 @@ const CourseService = require('../services/CourseService')
 class CourseController {
     async handleCreate(req, res) {
         try {
-            const newCourse = await CourseService.createCourse(req.body)
+            const userID = req.user?.id
+
+            const newCourse = await CourseService.createCourse(userID, req.body)
 
             return res.status(201).json(newCourse)
 
@@ -16,7 +18,8 @@ class CourseController {
 
     async handleList(req, res) {
         try {
-            const courses = await CourseService.getCourse(req.query)
+            const userID = req.user?.id
+            const courses = await CourseService.getCourse(userID, req.query)
 
             return res.status(200).json(courses)
 
@@ -29,7 +32,8 @@ class CourseController {
     
     async handleUpdate(req, res) {
         try {
-            const updatedCourse = await CourseService.updateCourse(req.params, req.body)
+            const userID = req.user?.id
+            const updatedCourse = await CourseService.updateCourse(userID, req.params, req.body)
 
             return res.status(201).json(updatedCourse)
 
@@ -42,7 +46,8 @@ class CourseController {
 
     async handleDelete(req, res) {
         try {
-            await CourseService.deleteCourse(req.params)
+            const userID = req.user?.id
+            await CourseService.deleteCourse(userID, req.params)
 
             return res.status(200).json({ message: "Course successfully deleted"})
 

@@ -22,6 +22,7 @@ pgdata/
 postgres-data/
 *.dump
 *.sql
+!src/db/migrations/*.sql
 *.sql.gz
 *.db
 *.sqlite

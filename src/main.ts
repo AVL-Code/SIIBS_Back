@@ -1,12 +1,13 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { validateEnv } from './shared';
 
 export async function bootstrap(): Promise<void> {
+  const env = validateEnv();
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1');
-  const port = Number(process.env['PORT'] ?? 3000);
-  await app.listen(port);
+  await app.listen(env.PORT);
 }
 
 if (require.main === module) {

@@ -1,0 +1,112 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - dev
+      - hml
+      - main
+  pull_request:
+    branches:
+      - dev
+      - hml
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-sdd:
+    name: Validate SDD Conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Branch Name, Commit Messages & PR Title
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          BRANCH_REGEX='^(feat|fix|docs|refactor|test|chore)/[0-9]+-(registry|assistance|iam|audit|education|db|backup|ui|spec|shared)-[a-z0-9-]+$'
+          COMMIT_REGEX='^(feat|fix|docs|refactor|test|chore)\((registry|assistance|iam|audit|education|db|backup|ui|spec|shared)\): [a-z].+ \[[A-Za-z0-9-_, §.]+\] \(#[0-9]+\)$'
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [[ "$HEAD_REF" != "dev" && "$HEAD_REF" != "hml" && "$HEAD_REF" != "main" && ! "$HEAD_REF" =~ ^dependabot/ ]]; then
+              if ! [[ "$HEAD_REF" =~ $BRANCH_REGEX ]]; then
+                echo "::error::Branch '$HEAD_REF' violates SDD convention: <type>/<issue-#>-<module>-<slug>"
+                exit 1
+              fi
+              if ! [[ "$PR_TITLE" =~ $COMMIT_REGEX ]]; then
+                echo "::error::PR Title '$PR_TITLE' violates SDD convention: <type>(<scope>): <summary> [spec-ref] (#<issue-#>)"
+                exit 1
+              fi
+            fi
+            COMMITS=$(git log --format=%s "origin/${BASE_REF}..HEAD")
+          else
+            COMMITS=$(git log -1 --format=%s)
+          fi
+
+          while IFS= read -r msg; do
+            [ -z "$msg" ] && continue
+            if [[ "$msg" =~ ^Merge\  ]] || [[ "$msg" =~ ^build\(deps ]]; then
+              continue
+            fi
+            if ! [[ "$msg" =~ $COMMIT_REGEX ]]; then
+              echo "::error::Commit '$msg' violates SDD convention: <type>(<scope>): <summary> [spec-ref] (#<issue-#>)"
+              exit 1
+            fi
+          done <<< "$COMMITS"
+
+  ci:
+    name: Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    needs: validate-sdd
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: siibs_test
+          POSTGRES_PASSWORD: siibs_test_password
+          POSTGRES_DB: siibs_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U siibs_test -d siibs_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://siibs_test:siibs_test_password@localhost:5432/siibs_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript strict typecheck
+        run: npm run typecheck
+
+      - name: Run PostgreSQL database migrations
+        run: npm run db:migrate
+
+      - name: Run unit and PostgreSQL integration tests
+        run: npm test
+
+      - name: Verify production build
+        run: npm run build

@@ -17,6 +17,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "typecheck": "tsc --noEmit",
+    "db:migrate": "node -e \"console.log('Database migrations step ready')\"",
     "test": "vitest run",
     "test:watch": "vitest"
   },

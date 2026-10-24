@@ -1,0 +1,95 @@
+name: Project Board Sync
+
+on:
+  create:
+  push:
+    branches-ignore:
+      - dev
+      - hml
+      - main
+  pull_request:
+    types:
+      - closed
+    branches:
+      - dev
+      - hml
+      - main
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  sync-board:
+    name: Sync GitHub Project #2 Status
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'create' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN || github.token }}
+      PROJECT_ID: PVT_kwDODyBs284BojxS
+      STATUS_FIELD_ID: PVTSSF_lADODyBs284BojxSzhnDUCA
+      IN_PROGRESS_OPTION_ID: 47fc9ee4
+      DONE_OPTION_ID: "98236657"
+      EVENT_NAME: ${{ github.event_name }}
+      REF_NAME: ${{ github.ref_name }}
+      PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      COMMIT_MSG: ${{ github.event.head_commit.message }}
+    steps:
+      - name: Update Issue Status on GitHub Project #2
+        run: |
+          ISSUE_NUM=""
+          TARGET_OPTION_ID=""
+          SHOULD_CLOSE="false"
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            TARGET_OPTION_ID="$DONE_OPTION_ID"
+            SHOULD_CLOSE="true"
+            if [[ "$PR_HEAD_REF" =~ ^(feat|fix|docs|refactor|test|chore)/([0-9]+)- ]]; then
+              ISSUE_NUM="${BASH_REMATCH[2]}"
+            elif [[ "$PR_TITLE" =~ \(#([0-9]+)\) ]]; then
+              ISSUE_NUM="${BASH_REMATCH[1]}"
+            elif [[ "$PR_BODY" =~ (Closes|Refs)[[:space:]]+#([0-9]+) ]]; then
+              ISSUE_NUM="${BASH_REMATCH[2]}"
+            fi
+          else
+            TARGET_OPTION_ID="$IN_PROGRESS_OPTION_ID"
+            if [[ "$REF_NAME" =~ ^(feat|fix|docs|refactor|test|chore)/([0-9]+)- ]]; then
+              ISSUE_NUM="${BASH_REMATCH[2]}"
+            elif [[ "$COMMIT_MSG" =~ \(#([0-9]+)\) ]]; then
+              ISSUE_NUM="${BASH_REMATCH[1]}"
+            fi
+          fi
+
+          if [ -z "$ISSUE_NUM" ]; then
+            echo "No SDD Issue number detected in branch, commit, or PR. Skipping sync."
+            exit 0
+          fi
+
+          echo "Detected Issue #${ISSUE_NUM}. Synchronizing with GitHub Project #2..."
+
+          ITEM_ID=$(gh api graphql \
+            -f query='query($projectId: ID!) { node(id: $projectId) { ... on ProjectV2 { items(first: 100) { nodes { id content { ... on Issue { number } } } } } } }' \
+            -f projectId="$PROJECT_ID" \
+            --jq ".data.node.items.nodes[] | select(.content.number == ${ISSUE_NUM}) | .id" || true)
+
+          if [ -z "$ITEM_ID" ]; then
+            echo "::warning::Could not query or locate Issue #${ISSUE_NUM} on Project #2 (ensure PROJECT_SYNC_TOKEN has project scope)."
+            exit 0
+          fi
+
+          gh api graphql \
+            -f query='mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) { updateProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId, value: { singleSelectOptionId: $optionId } }) { projectV2Item { id } } }' \
+            -f projectId="$PROJECT_ID" \
+            -f itemId="$ITEM_ID" \
+            -f fieldId="$STATUS_FIELD_ID" \
+            -f optionId="$TARGET_OPTION_ID" || true
+
+          if [ "$SHOULD_CLOSE" = "true" ]; then
+            gh issue close "$ISSUE_NUM" --repo AVL-Code/SIIBS || true
+          fi

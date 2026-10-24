@@ -7,16 +7,25 @@ build/
 coverage/
 *.tsbuildinfo
 
-# Environment variables
+# Environment variables & secrets (RNF-01, SECURITY.md)
 .env
 .env.*
 !.env.example
+*.pem
+*.key
 
-# Local protected file storage & backups (SECURITY.md / RNF-06)
+# Local protected file storage, databases & backups (SECURITY.md / RNF-05 / RNF-06)
 storage/
+storage/documents/
 backups/
+pgdata/
+postgres-data/
 *.dump
+*.sql
 *.sql.gz
+*.db
+*.sqlite
+*.sqlite3
 
 # Logs
 logs/

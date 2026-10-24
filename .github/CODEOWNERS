@@ -1,16 +1,16 @@
 # SIIBS Backend (Modular Monolith) Code Ownership (RNF-01, RNF-07, 11-tech-spec.md §3.1)
 # Default owners for the backend repository
-* @brunoabreuco @DMBMz @gpombotky
+* @brunoabreuco
 
 # Bounded Context Modules (PostgreSQL Schema Boundaries)
-/src/modules/iam/ @brunoabreuco @DMBMz @gpombotky
-/src/modules/audit/ @brunoabreuco @DMBMz @gpombotky
-/src/modules/registry/ @brunoabreuco @DMBMz @gpombotky
-/src/modules/assistance/ @brunoabreuco @DMBMz @gpombotky
-/src/modules/education/ @brunoabreuco @DMBMz @gpombotky
+/src/modules/iam/ @brunoabreuco
+/src/modules/audit/ @brunoabreuco
+/src/modules/registry/ @brunoabreuco
+/src/modules/assistance/ @brunoabreuco
+/src/modules/education/ @brunoabreuco
 
 # Database Multi-Schema, Migrations, Shared Kernel & Backup Scripts
-/src/db/ @brunoabreuco @DMBMz @gpombotky
-/src/shared/ @brunoabreuco @DMBMz @gpombotky
-/scripts/ @brunoabreuco @DMBMz @gpombotky
-/.github/ @brunoabreuco @DMBMz @gpombotky
+/src/db/ @brunoabreuco
+/src/shared/ @brunoabreuco
+/scripts/ @brunoabreuco
+/.github/ @brunoabreuco

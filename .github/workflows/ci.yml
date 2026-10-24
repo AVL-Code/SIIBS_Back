@@ -33,7 +33,7 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: |
           BRANCH_REGEX='^(feat|fix|docs|refactor|test|chore)/[0-9]+-(registry|assistance|iam|audit|education|db|backup|ui|spec|shared)-[a-z0-9-]+$'
-          COMMIT_REGEX='^(feat|fix|docs|refactor|test|chore)\((registry|assistance|iam|audit|education|db|backup|ui|spec|shared)\): [a-z].+ \[[A-Za-z0-9-_, §.]+\] \(#[0-9]+\)$'
+          COMMIT_REGEX='^(feat|fix|docs|refactor|test|chore)\((registry|assistance|iam|audit|education|db|backup|ui|spec|shared)\): [a-z].+ \[[A-Za-z0-9_, §.-]+\] \(#[0-9]+\)$'
 
           if [ "$EVENT_NAME" = "pull_request" ]; then
             if [[ "$HEAD_REF" != "dev" && "$HEAD_REF" != "hml" && "$HEAD_REF" != "main" && ! "$HEAD_REF" =~ ^dependabot/ ]]; then
@@ -110,3 +110,4 @@ jobs:
 
       - name: Verify production build
         run: npm run build
+

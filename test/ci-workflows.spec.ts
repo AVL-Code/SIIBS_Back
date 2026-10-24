@@ -22,6 +22,7 @@ describe('Backend CI/CD & Project Board Workflows (RNF-04, RNF-07, RNF-09, 11-te
     expect(content).toContain('npm run build');
     expect(content).toContain('db:migrate');
     expect(content).toContain('validate-sdd');
+    expect(content).toContain('[A-Za-z0-9_, §.-]+');
   });
 
   it('defines .github/workflows/project-board-sync.yml automating GitHub Project #2 status transitions', () => {

@@ -1,2 +1,2 @@
-// IAM HTTP controllers (/api/v1/auth, /api/v1/users)
-export {};
+export { AuthController } from './auth.controller';
+export { DomainExceptionFilter } from './domain-exception.filter';

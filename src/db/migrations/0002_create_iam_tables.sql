@@ -46,3 +46,4 @@ CREATE TABLE IF NOT EXISTS iam.role_permissions (
 
 CREATE INDEX IF NOT EXISTS idx_iam_user_roles_role_id ON iam.user_roles(role_id);
 CREATE INDEX IF NOT EXISTS idx_iam_role_permissions_permission_id ON iam.role_permissions(permission_id);
+

@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Pool } from 'pg';
 import {
   DEFAULT_PERMISSIONS,
@@ -27,6 +29,17 @@ export async function seedIamDefaults(
   connectionString?: string,
   options: SeedIamOptions = {},
 ): Promise<SeedIamSummary> {
+  if (
+    !connectionString &&
+    !process.env['DATABASE_URL'] &&
+    typeof process.loadEnvFile === 'function'
+  ) {
+    for (const candidate of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]) {
+      if (existsSync(candidate)) {
+        process.loadEnvFile(candidate);
+      }
+    }
+  }
   const databaseUrl =
     connectionString ??
     process.env['DATABASE_URL'] ??

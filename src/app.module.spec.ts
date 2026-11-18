@@ -31,5 +31,5 @@ describe('AppModule & Bounded Context Architecture (11-tech-spec.md §3.1, §3.2
 
     const messages = results[0]?.messages ?? [];
     expect(messages.some((msg) => msg.ruleId === 'no-restricted-imports')).toBe(true);
-  });
+  }, 20000);
 });

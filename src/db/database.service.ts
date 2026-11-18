@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
@@ -10,6 +12,17 @@ export class DatabaseService implements OnModuleDestroy {
   private readonly connectionString: string;
 
   constructor(@Optional() connectionString?: string) {
+    if (
+      !connectionString &&
+      !process.env['DATABASE_URL'] &&
+      typeof process.loadEnvFile === 'function'
+    ) {
+      for (const candidate of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]) {
+        if (existsSync(candidate)) {
+          process.loadEnvFile(candidate);
+        }
+      }
+    }
     this.connectionString =
       connectionString ??
       process.env['DATABASE_URL'] ??

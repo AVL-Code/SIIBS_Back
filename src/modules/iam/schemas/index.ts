@@ -1,2 +1,7 @@
-// IAM Zod DTO validation schemas
-export {};
+export {
+  createUserInputSchema,
+  loginInputSchema,
+  parseWithSchema,
+  type CreateUserInput,
+  type LoginInput,
+} from './auth.schema';

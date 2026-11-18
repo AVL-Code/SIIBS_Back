@@ -6,7 +6,13 @@ export {
   assistanceSchema,
   auditSchema,
   educationSchema,
+  iamPermissionsTable,
+  iamRolePermissionsTable,
+  iamRolesTable,
   iamSchema,
+  iamUserRolesTable,
+  iamUsersTable,
   registrySchema,
   type BoundedContextSchema,
 } from './schemas';
+export { seedIamDefaults, type SeedIamOptions, type SeedIamSummary } from './seed';

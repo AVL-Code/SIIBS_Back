@@ -19,6 +19,17 @@ function resolveMigrationsDir(): string {
 }
 
 export async function runMigrations(connectionString?: string): Promise<string[]> {
+  if (
+    !connectionString &&
+    !process.env['DATABASE_URL'] &&
+    typeof process.loadEnvFile === 'function'
+  ) {
+    for (const candidate of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]) {
+      if (existsSync(candidate)) {
+        process.loadEnvFile(candidate);
+      }
+    }
+  }
   const databaseUrl =
     connectionString ??
     process.env['DATABASE_URL'] ??
